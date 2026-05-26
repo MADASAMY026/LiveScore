@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>IPL Live Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/match.css">
+  <link rel="stylesheet" href="css/auth.css">
+
+</head>
+<body class="theme-teams">
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div class="logo">IPL <span>PRO</span></div>
+    <div class="live-badge" id="header-badge">SELECT</div>
+  </div>
+</div>
+
+<!-- PAGE 0: AUTHENTICATION -->
+<div class="page" id="page-auth">
+  <div class="body-wrap" style="display:flex; flex-direction:column; justify-content:center; min-height:80vh;">
+    <div class="auth-card">
+      <div class="auth-logo">IPL <span>PRO</span></div>
+      <div class="auth-sub">Sign in to start scoring</div>
+      
+      <div id="auth-error" class="auth-error" style="display:none;"></div>
+      
+      <div class="auth-field">
+        <label>Email</label>
+        <input type="email" id="auth-email" placeholder="Enter your email">
+      </div>
+      <div class="auth-field">
+        <label>Password</label>
+        <input type="password" id="auth-password" placeholder="Enter your password">
+      </div>
+      
+      <button class="auth-btn" id="btn-login" onclick="window.handleLogin()">SIGN IN</button>
+      <button class="auth-btn auth-btn-alt" id="btn-register" onclick="window.handleRegister()">CREATE ACCOUNT</button>
+      <button class="auth-btn auth-btn-google" id="btn-google" onclick="window.handleGoogleLogin()">🌐 SIGN IN WITH GOOGLE</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 1: TEAM SELECT -->
+<div class="page active" id="page-teams">
+<div class="body-wrap">
+  <div class="page-title">SETUP MATCH</div>
+
+  <!-- Stepper -->
+  <div class="stepper">
+    <div class="step-dot active" id="sdot1">1</div>
+    <div class="step-line" id="sline1"></div>
+    <div class="step-dot" id="sdot2">2</div>
+    <div class="step-line" id="sline2"></div>
+    <div class="step-dot" id="sdot3">3</div>
+  </div>
+  <div class="step-labels">
+    <span class="step-lbl active" id="slbl1">TEAM A</span>
+    <span class="step-lbl" id="slbl2">TEAM B</span>
+    <span class="step-lbl" id="slbl3">VENUE</span>
+  </div>
+
+  <!-- Selected Summary Bar (hidden until step 2+) -->
+  <div class="sel-summary" id="sel-summary-bar" style="display:none;">
+    <div class="sel-summary-team">
+      <div class="sel-summary-badge" id="sum-a-badge">A</div>
+      <div class="sel-summary-info">
+        <span class="sel-summary-label">TEAM A</span>
+        <span class="sel-summary-name" id="sum-a-name">—</span>
+      </div>
+    </div>
+    <div class="sel-vs">VS</div>
+    <div class="sel-summary-team" style="justify-content:flex-end;">
+      <div class="sel-summary-info" style="text-align:right;">
+        <span class="sel-summary-label">TEAM B</span>
+        <span class="sel-summary-name" id="sum-b-name">—</span>
+      </div>
+      <div class="sel-summary-badge" id="sum-b-badge">B</div>
+    </div>
+  </div>
+
+  <!-- STEP 1: Team A -->
+  <div class="step-panel active" id="step1">
+    <div class="page-sub">Pick Team A</div>
+    <div class="teams-grid" id="teamsA-grid"></div>
+    <button class="add-stadium-btn" onclick="openAddTeamModal('A')" style="border-color:rgba(0,153,255,0.3);margin-bottom:14px;">🏏 + CREATE CUSTOM TEAM</button>
+    <button class="next-btn" id="step1-next" onclick="goStep2()" disabled>PICK TEAM B →</button>
+  </div>
+
+  <!-- STEP 2: Team B -->
+  <div class="step-panel" id="step2">
+    <div class="page-sub">Pick Team B</div>
+    <div class="teams-grid" id="teamsB-grid"></div>
+    <button class="add-stadium-btn" onclick="openAddTeamModal('B')" style="border-color:rgba(0,153,255,0.3);margin-bottom:14px;">🏏 + CREATE CUSTOM TEAM</button>
+    <button class="next-btn" id="step2-next" onclick="goStep3()" disabled>PICK STADIUM →</button>
+  </div>
+
+  <!-- STEP 3: Stadium + Overs -->
+  <div class="step-panel" id="step3">
+    <div class="page-sub">Choose Venue & Overs</div>
+    <div class="stadium-grid" id="stadium-grid"></div>
+    <button class="add-stadium-btn" onclick="openAddStadiumModal()">🏟️ + ADD STADIUM</button>
+    <div class="overs-row">
+      <label>Overs per Innings</label>
+      <input type="number" id="total-overs" value="20" min="1" max="50">
+    </div>
+    <button class="next-btn" id="teams-next-btn" onclick="goToPlayers()">SELECT PLAYERS →</button>
+  </div>
+
+</div>
+</div>
+
+<!-- PAGE 2: PLAYER SELECT -->
+<div class="page" id="page-players">
+<div class="body-wrap">
+  <div class="page-title" id="players-title">SELECT PLAYERS</div>
+  <div class="page-sub">Choose 11 from each team's squad</div>
+
+  <!-- Team Tabs -->
+  <div class="player-tabs">
+    <div class="player-tab active" id="ptab-A" onclick="switchPlayerTab('A')">
+      <span id="ptab-a-name">TEAM A</span>
+      <span class="tab-count" id="ptab-a-count">0/11</span>
+    </div>
+    <div class="player-tab" id="ptab-B" onclick="switchPlayerTab('B')">
+      <span id="ptab-b-name">TEAM B</span>
+      <span class="tab-count" id="ptab-b-count">0/11</span>
+    </div>
+  </div>
+
+  <!-- Tab Panel A -->
+  <div class="tab-panel active" id="tpanel-A">
+    <div class="player-grid" id="poolA"></div>
+  </div>
+
+  <!-- Tab Panel B -->
+  <div class="tab-panel" id="tpanel-B">
+    <div class="player-grid" id="poolB"></div>
+  </div>
+
+  <button class="next-btn" id="players-next-btn" onclick="goToToss()" disabled>GO TO TOSS →</button>
+</div>
+</div>
+
+<!-- PAGE 3: TOSS -->
+<div class="page" id="page-toss">
+<div class="body-wrap">
+  <div class="toss-wrap">
+    <div class="toss-title">COIN TOSS</div>
+    <div class="toss-sub" id="toss-sub">Who wins the toss?</div>
+    <div class="coin-wrap">
+      <div class="coin show-heads" id="coin">
+        <div class="coin-face coin-heads">
+          <div class="coin-emoji">🏏</div>
+          <div class="coin-label">HEADS</div>
+        </div>
+        <div class="coin-face coin-tails">
+          <div class="coin-emoji">🪙</div>
+          <div class="coin-label">TAILS</div>
+        </div>
+      </div>
+    </div>
+    <div class="toss-result" id="toss-result"></div>
+    <div id="toss-choice-section" style="display:none;">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:10px;" id="toss-winner-text"></div>
+      <div class="toss-choice-row">
+        <div class="toss-choice" onclick="chooseBatOrBowl('bat',this)">🏏 BAT FIRST</div>
+        <div class="toss-choice" onclick="chooseBatOrBowl('bowl',this)">🎯 BOWL FIRST</div>
+      </div>
+      <button class="next-btn" id="toss-start-btn" onclick="startMatch()" disabled>START MATCH 🏏</button>
+    </div>
+    <button class="toss-btn" id="flip-btn" onclick="flipCoin()">FLIP COIN 🪙</button>
+  </div>
+</div>
+</div>
+
+<!-- PAGE 4: MATCH -->
+<div class="page" id="page-match">
+<div class="body-wrap">
+  <div class="innings-tabs">
+    <div class="inn-tab on" id="tab-inn1" onclick="switchView(1)">1ST INNINGS</div>
+    <div class="inn-tab" id="tab-inn2" onclick="switchView(2)">2ND INNINGS</div>
+  </div>
+  <div class="scoreboard">
+    <div class="stadium-banner" id="stadium-banner">🏟️ —</div>
+    <div class="teams-row">
+      <div class="team-block">
+        <div class="team-logo-sm" id="bat-logo">🏏</div>
+        <div class="team-name-big" id="bat-team-name">—</div>
+        <div class="team-score-big"><span id="bat-runs">0</span>/<span id="bat-wkts">0</span></div>
+        <div class="team-overs"><span id="bat-overs">0.0</span> ov</div>
+      </div>
+      <div class="vs-badge">VS</div>
+      <div class="team-block">
+        <div class="team-logo-sm" id="bowl-logo">🎯</div>
+        <div class="team-name-big" id="bowl-team-name">—</div>
+        <div class="team-score-big" style="font-size:26px;"><span id="bowl-target" style="font-size:26px;">—</span></div>
+        <div class="team-overs" id="bowl-need">—</div>
+      </div>
+    </div>
+    <div class="crr-row">
+      <div class="crr-item"><div class="crr-val" id="crr-val">0.00</div><div class="crr-lbl">CRR</div></div>
+      <div class="crr-item"><div class="crr-val" id="rrr-val">—</div><div class="crr-lbl">RRR</div></div>
+      <div class="crr-item"><div class="crr-val" id="last6-val">—</div><div class="crr-lbl">Last 6</div></div>
+      <div class="crr-item"><div class="crr-val" id="balls-left">—</div><div class="crr-lbl">Balls Left</div></div>
+    </div>
+    <div class="partnership-row">
+      <span>🤝 Partnership: </span><span id="partnership-val">0 (0)</span>
+    </div>
+  </div>
+  <div class="status-banner" id="status-banner">—</div>
+    
+    <!-- AI Commentary -->
+    <div class="commentary-box">
+      <div class="commentary-header">
+        <span class="commentary-icon">🎙️</span>
+        <span class="commentary-title">AI COMMENTARY</span>
+        <button class="voice-toggle-btn" id="voice-toggle-btn" onclick="window.aiCommentary && window.aiCommentary.toggleVoice()">🔊 VOICE ON</button>
+      </div>
+      <div class="commentary-container" id="commentary-container">
+        <div class="commentary-item">
+          <div class="commentary-text">Welcome to the match! 🏏</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="ball-entry" id="ball-entry-box">
+    <div class="ball-entry-title">⚡ BALL BY BALL ENTRY</div>
+    <div class="select-row">
+      <div class="sel-box"><label>🏏 Striker</label><select id="bat1-sel"></select></div>
+      <div class="sel-box"><label>🏏 Non-Striker</label><select id="bat2-sel"></select></div>
+    </div>
+    <div class="sel-box" style="margin-bottom:10px;"><label>🎯 Bowler</label><select id="bowl-sel"></select></div>
+    <div class="run-btns">
+      <div class="run-btn" onclick="window.addBall(0)">0</div>
+      <div class="run-btn" onclick="window.addBall(1)">1</div>
+      <div class="run-btn" onclick="window.addBall(2)">2</div>
+      <div class="run-btn" onclick="window.addBall(3)">3</div>
+      <div class="run-btn r4" onclick="window.addBall(4)">4</div>
+      <div class="run-btn r6" onclick="window.addBall(6)">6</div>
+      <div class="run-btn rW" onclick="window.openWicketModal()">W</div>
+      <div class="run-btn rNB" onclick="window.openExtrasModal('NB')">NB</div>
+      <div class="run-btn rWD" onclick="window.openExtrasModal('WD')">WD</div>
+      <div class="run-btn rB" onclick="window.openExtrasModal('B')">B</div>
+      <div class="run-btn rLB" onclick="window.openExtrasModal('LB')">LB</div>
+    </div>
+    <div class="balls-row" id="balls-row"></div>
+  </div>
+  <div class="scorecard">
+    <div class="sc-header"><div class="sc-title" id="bat-sc-title">BATTING</div></div>
+    <table class="sc-table">
+      <thead><tr><th>Batsman</th><th>R</th><th>B</th><th>4s</th><th>6s</th><th>SR</th></tr></thead>
+      <tbody id="bat-sc-body"></tbody>
+    </table>
+  </div>
+  <div class="scorecard">
+    <div class="sc-header"><div class="sc-title" id="bowl-sc-title">BOWLING</div></div>
+    <table class="sc-table">
+      <thead><tr><th>Bowler</th><th>O</th><th>M</th><th>R</th><th>W</th><th>Eco</th></tr></thead>
+      <tbody id="bowl-sc-body"></tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<!-- PAGE 5: END -->
+<div class="page" id="page-end">
+<div class="body-wrap">
+  <div class="end-wrap">
+    <div class="trophy" id="end-trophy">🏆</div>
+    <div id="winner-logo" style="margin-bottom:8px;"></div>
+    <div class="winner-title" id="end-winner">WINNER</div>
+    <div class="winner-sub" id="end-sub">wins!</div>
+    <div class="final-scores" id="final-scores"></div>
+    <!-- Super Over history -->
+    <div id="super-over-history" style="display:none;width:100%;max-width:340px;margin:0 auto 16px;"></div>
+    <button id="super-over-btn" class="next-btn" style="display:none;background:linear-gradient(135deg,#ff6b00,#e63946);margin-bottom:12px;" onclick="startSuperOver()">⚡ SUPER OVER</button>
+    <button class="play-again" onclick="playAgain()">🔄 PLAY AGAIN</button>
+  </div>
+</div>
+</div>
+
+<!-- PAGE 6: PROFILE -->
+<div class="page" id="page-profile">
+<div class="body-wrap">
+  <div class="page-title">MY PROFILE</div>
+  
+  <div class="profile-card">
+    <div class="profile-avatar" id="profile-avatar">👤</div>
+    <div class="profile-name" id="profile-name">Loading...</div>
+    <div class="profile-email" id="profile-email"></div>
+    
+    <div class="profile-stats">
+      <div class="profile-stat">
+        <div class="profile-stat-val" id="stat-matches">0</div>
+        <div class="profile-stat-lbl">Matches</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-val" id="stat-wins">0</div>
+        <div class="profile-stat-lbl">Wins</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-val" id="stat-points">0</div>
+        <div class="profile-stat-lbl">Points</div>
+      </div>
+    </div>
+    
+    <div class="profile-edit">
+      <div class="auth-field">
+        <label>Display Name</label>
+        <input type="text" id="edit-display-name" placeholder="Enter your display name">
+      </div>
+      <button class="next-btn" onclick="saveProfile()">SAVE CHANGES</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE 7: LEADERBOARD -->
+<div class="page" id="page-leaderboard">
+<div class="body-wrap">
+  <div class="page-title">🏆 LEADERBOARD</div>
+  
+  <!-- Leaderboard Tabs -->
+  <div class="leaderboard-tabs">
+    <button class="leaderboard-tab active" data-tab="global" onclick="switchLeaderboardTab('global')">🌍 GLOBAL</button>
+    <button class="leaderboard-tab" data-tab="tournament" onclick="switchLeaderboardTab('tournament')">🏏 TOURNAMENT</button>
+    <button class="leaderboard-tab" data-tab="weekly" onclick="switchLeaderboardTab('weekly')">📅 WEEKLY</button>
+  </div>
+  
+  <!-- Search & Filter -->
+  <div class="leaderboard-search-wrap">
+    <input type="text" id="leaderboard-search" placeholder="🔍 Search players..." class="leaderboard-search" oninput="filterLeaderboard(this.value)">
+  </div>
+  
+  <!-- Leaderboard List -->
+  <div class="leaderboard-list" id="leaderboard-list">Loading...</div>
+</div>
+</div>
+
+<!-- PAGE 8: MATCH HISTORY -->
+<div class="page" id="page-history">
+<div class="body-wrap">
+  <div class="page-title">MATCH HISTORY</div>
+  <div class="history-list" id="history-list">Loading...</div>
+</div>
+</div>
+
+<!-- PAGE 9: LIVE CHAT -->
+<div class="page" id="page-chat">
+<div class="body-wrap" style="display: flex; flex-direction: column; height: calc(100vh - 140px);">
+  <div class="page-title">LIVE CHAT</div>
+  <div class="chat-messages" id="chat-messages"></div>
+  <div class="chat-input-wrap">
+    <input type="text" id="chat-input" placeholder="Type your message...">
+    <button onclick="sendChatMessage()">SEND</button>
+  </div>
+</div>
+</div>
+
+<!-- PAGE 10: ADMIN PANEL -->
+<div class="page" id="page-admin">
+<div class="body-wrap">
+  <div class="page-title">ADMIN PANEL</div>
+  <div class="admin-content" id="admin-content">Loading...</div>
+</div>
+</div>
+
+<!-- PAGE 11: POINTS TABLE -->
+<div class="page" id="page-points">
+<div class="body-wrap">
+  <div class="page-title">POINTS TABLE</div>
+  <div id="points-table-container">Loading points table...</div>
+  <button class="next-btn" onclick="window.pointsTable && window.pointsTable.resetTournament()" style="margin-top:20px;background:var(--red);">🔄 RESET TOURNAMENT</button>
+</div>
+</div>
+
+<!-- TEAM EDIT MODAL -->
+<div class="modal-overlay hidden" id="team-logo-modal">
+<div class="modal-box" style="max-width:440px;">
+  <div class="modal-title">EDIT TEAM</div>
+  <div id="team-logo-modal-preview" style="width:120px;height:120px;margin:0 auto 16px;border-radius:16px;background:var(--dark3);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+    <div style="font-size:48px;">🏏</div>
+  </div>
+  <div class="modal-field">
+    <label>Team Full Name</label>
+    <input type="text" id="team-fullname-input" placeholder="e.g. Mumbai Indians">
+  </div>
+  <div class="modal-field">
+    <label>Team Short Name</label>
+    <input type="text" id="team-shortname-input" placeholder="e.g. MI">
+  </div>
+  <div class="modal-field">
+    <label>Upload Logo</label>
+    <input type="file" id="team-logo-input" accept="image/*" style="width:100%;padding:10px;border:1px dashed var(--border);border-radius:10px;background:var(--card);color:var(--text);">
+  </div>
+  <div class="modal-field">
+    <label>Or paste Image URL</label>
+    <input type="url" id="team-logo-url-input" placeholder="https://...jpg/png">
+  </div>
+  <div class="modal-btns" style="flex-wrap:wrap;">
+    <button class="modal-btn" style="background:var(--red);" onclick="resetTeam()">🔄 RESET</button>
+    <button class="modal-btn modal-btn-cancel" onclick="closeTeamLogoModal()">CANCEL</button>
+    <button class="modal-btn modal-btn-save" onclick="saveTeam()">SAVE</button>
+  </div>
+</div>
+</div>
+
+<!-- EDIT PLAYER MODAL -->
+<div class="modal-overlay hidden" id="edit-modal">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title">EDIT PLAYER</div>
+    <div class="modal-field">
+      <label>Player Name</label>
+      <input type="text" id="modal-name" placeholder="Enter player name">
+    </div>
+    <div class="modal-field">
+      <label>Jersey Number</label>
+      <input type="number" id="modal-num" min="1" max="99" placeholder="1-99">
+    </div>
+    <div class="modal-field">
+      <label>Role</label>
+      <select id="modal-role">
+        <option value="BAT">BAT - Batsman</option>
+        <option value="BOWL">BOWL - Bowler</option>
+        <option value="ALL">ALL - All Rounder</option>
+        <option value="WK-BAT">WK-BAT - Wicket Keeper</option>
+      </select>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-cancel" onclick="closeModal()">CANCEL</button>
+      <button class="modal-btn modal-btn-delete hidden" id="modal-delete-btn" onclick="deletePlayer()">DELETE</button>
+      <button class="modal-btn modal-btn-save" onclick="savePlayer()">SAVE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD STADIUM MODAL -->
+<div class="modal-overlay hidden" id="add-stadium-modal">
+  <div class="modal-box">
+    <div class="modal-title">ADD STADIUM</div>
+    <div class="modal-field">
+      <label>Stadium Name</label>
+      <input type="text" id="stadium-modal-name" placeholder="e.g. Rajiv Gandhi Intl.">
+    </div>
+    <div class="modal-field">
+      <label>City</label>
+      <input type="text" id="stadium-modal-city" placeholder="e.g. Hyderabad">
+    </div>
+    <div class="modal-field">
+      <label>Image URL <span style="color:var(--muted);font-size:10px;text-transform:none;letter-spacing:0;">(optional)</span></label>
+      <input type="url" id="stadium-modal-img" placeholder="https://...jpg">
+    </div>
+    <div id="stadium-img-preview" style="display:none;margin-bottom:8px;border-radius:10px;overflow:hidden;aspect-ratio:16/9;background:var(--dark3);">
+      <img id="stadium-preview-img" src="" alt="preview" style="width:100%;height:100%;object-fit:cover;display:block;">
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-cancel" onclick="closeAddStadiumModal()">CANCEL</button>
+      <button class="modal-btn modal-btn-save" onclick="saveNewStadium()">ADD STADIUM</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD TEAM MODAL -->
+<div class="modal-overlay hidden" id="add-team-modal">
+  <div class="modal-box">
+    <div class="modal-title" id="add-team-modal-title">CREATE TEAM</div>
+
+    <div class="modal-field">
+      <label>Team Full Name</label>
+      <input type="text" id="tm-fullname" placeholder="e.g. Hyderabad Hawks" maxlength="30">
+    </div>
+    <div class="modal-field">
+      <label>Short Name <span style="color:var(--muted);font-size:10px;text-transform:none;letter-spacing:0;">(max 4 letters)</span></label>
+      <input type="text" id="tm-short" placeholder="e.g. HH" maxlength="4" style="text-transform:uppercase;">
+    </div>
+    <div class="modal-field">
+      <label>Team Color</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="color" id="tm-color" value="#FF6B00" style="width:48px;height:40px;border:none;background:none;cursor:pointer;border-radius:8px;padding:2px;">
+        <div id="tm-color-preview" style="flex:1;height:40px;border-radius:8px;background:#FF6B00;transition:background 0.2s;display:flex;align-items:center;justify-content:center;">
+          <span id="tm-color-hex" style="font-size:12px;color:#fff;font-family:monospace;text-shadow:0 1px 3px rgba(0,0,0,0.5);">#FF6B00</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-field">
+      <label>Logo URL <span style="color:var(--muted);font-size:10px;text-transform:none;letter-spacing:0;">(optional)</span></label>
+      <input type="url" id="tm-logo-url" placeholder="https://...png">
+    </div>
+    <div id="tm-logo-preview" style="display:none;margin-bottom:10px;width:80px;height:80px;border-radius:12px;overflow:hidden;background:var(--dark3);margin:0 auto 10px;">
+      <img id="tm-logo-img" src="" alt="logo" style="width:100%;height:100%;object-fit:contain;padding:6px;">
+    </div>
+
+    <!-- Color Swatches -->
+    <div style="margin-bottom:14px;">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Quick Colors</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <div class="color-swatch" onclick="pickSwatch('#E63946')" style="background:#E63946;"></div>
+        <div class="color-swatch" onclick="pickSwatch('#FF6B00')" style="background:#FF6B00;"></div>
+        <div class="color-swatch" onclick="pickSwatch('#FFD700')" style="background:#FFD700;"></div>
+        <div class="color-swatch" onclick="pickSwatch('#2DC653')" style="background:#2DC653;"></div>
+        <div class="color-swatch" onclick="pickSwatch('#0099FF')" style="background:#0099FF;"></div>
+        <div class="color-swatch" onclick="pickSwatch('#9b59b6')" style="background:#9b59b6;"></div>
+        <div class="color-swatch" onclick="pickSwatch('#E91E8C')" style="background:#E91E8C;"></div>
+        <div class="color-swatch" onclick="pickSwatch('#1C1C1C')" style="background:#1C1C1C;border:1px solid #444;"></div>
+      </div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-cancel" onclick="closeAddTeamModal()">CANCEL</button>
+      <button class="modal-btn modal-btn-save" onclick="saveNewTeam()">CREATE TEAM</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADVANCED WICKET MODAL -->
+<div class="modal-overlay hidden" id="wicket-modal">
+  <div class="modal-box">
+    <div class="modal-title" style="color:var(--red);">WICKET FALLEN</div>
+    <div class="modal-field">
+      <label>Dismissal Type</label>
+      <select id="w-type" onchange="window.onWicketTypeChange()">
+        <option value="BOWLED">Bowled</option>
+        <option value="CAUGHT">Caught</option>
+        <option value="LBW">LBW</option>
+        <option value="RUNOUT">Run Out</option>
+        <option value="STUMPED">Stumped</option>
+        <option value="HIT_WICKET">Hit Wicket</option>
+      </select>
+    </div>
+    <div id="runout-opts" style="display:none;">
+      <div class="modal-field">
+        <label>Who got out?</label>
+        <select id="w-who"></select>
+      </div>
+      <div class="modal-field">
+        <label>Runs completed before out</label>
+        <input type="number" id="w-runs" value="0" min="0" max="6">
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-cancel" onclick="window.closeWicketModal()">CANCEL</button>
+      <button class="modal-btn modal-btn-delete" style="border-color:var(--red);background:var(--red);color:#fff;" onclick="window.confirmWicket()">OUT!</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADVANCED EXTRAS MODAL -->
+<div class="modal-overlay hidden" id="extras-modal">
+  <div class="modal-box">
+    <div class="modal-title" id="ex-title">EXTRAS</div>
+    <div class="modal-field">
+      <label>Runs Scored (Bat or Extras)</label>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;" id="ex-run-btns">
+        <div class="run-btn" onclick="window.confirmExtra(0)">0</div>
+        <div class="run-btn" onclick="window.confirmExtra(1)">1</div>
+        <div class="run-btn" onclick="window.confirmExtra(2)">2</div>
+        <div class="run-btn" onclick="window.confirmExtra(3)">3</div>
+        <div class="run-btn r4" onclick="window.confirmExtra(4)">4</div>
+        <div class="run-btn r6" onclick="window.confirmExtra(6)">6</div>
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-cancel" onclick="window.closeExtrasModal()">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav" id="bottom-nav">
+  <div class="nav-item active" id="nav-home" onclick="navClick('home')">
+    <span style="font-size:20px;">🏠</span><span>Home</span><div class="nav-dot"></div>
+  </div>
+  <div class="nav-item" id="nav-score" onclick="navClick('score')">
+    <span style="font-size:20px;">📊</span><span>Score</span><div class="nav-dot"></div>
+  </div>
+  <div class="nav-item" id="nav-squad" onclick="navClick('squad')">
+    <span style="font-size:20px;">👥</span><span>Squad</span><div class="nav-dot"></div>
+  </div>
+  <div class="nav-item" id="nav-points" onclick="navClick('points')">
+    <span style="font-size:20px;">📋</span><span>Points</span><div class="nav-dot"></div>
+  </div>
+  <div class="nav-item" id="nav-chat" onclick="navClick('chat')">
+    <span style="font-size:20px;">💬</span><span>Chat</span><div class="nav-dot"></div>
+  </div>
+  <div class="nav-item" id="nav-leaderboard" onclick="navClick('leaderboard')">
+    <span style="font-size:20px;">🏆</span><span>Top</span><div class="nav-dot"></div>
+  </div>
+</div>
+
+  <!-- Firebase Scripts (v9 Module) -->
+  <script type="module" src="js/firebase.js"></script>
+  <script type="module" src="js/auth.js"></script>
+  <script type="module" src="js/features.js"></script>
+
+  <script src="js/app.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/match.js"></script>
+  <script src="js/scoring.js"></script>
+  <script src="js/stats.js"></script>
+  <script src="js/aiCommentary.js"></script>
+  <script src="js/runRate.js"></script>
+  <script src="js/pointsTable.js"></script>
+  <script src="js/liveScore.js"></script>
+
+</body>
+</html>
