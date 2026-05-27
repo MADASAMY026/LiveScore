@@ -39,9 +39,15 @@ function initFeatures() {
             window.pointsTable.renderPointsTable();
           }
           break;
+        case 'stats':
+          featuresShowPage('page-player-stats');
+          window.updateNav('stats');
+          if (window.playerStats && window.playerStats.renderPlayerStatsPage) {
+            window.playerStats.renderPlayerStatsPage();
+          }
+          break;
         case 'score':
         case 'squad':
-        case 'stats':
           originalNavClick(page);
           break;
         default:
@@ -98,6 +104,7 @@ function featuresShowPage(pageId) {
       'page-match':  'theme-match',
       'page-end':    'theme-end',
       'page-points': 'theme-teams',
+      'page-player-stats': 'theme-teams',
     };
     document.body.className = themeMap[pageId] || 'theme-teams';
     
@@ -111,6 +118,10 @@ function featuresShowPage(pageId) {
       loadChat();
     } else if (pageId === 'page-admin') {
       loadAdminPanel();
+    } else if (pageId === 'page-player-stats') {
+      if (window.playerStats && window.playerStats.renderPlayerStatsPage) {
+        window.playerStats.renderPlayerStatsPage();
+      }
     }
   }
 }

@@ -256,4 +256,34 @@ let inn=[null,
   {batting:[],bowling:[],runs:0,wickets:0,balls:0,batStats:{},bowlStats:{},allBalls:[],striker:null,nonStriker:null,bowler:null}
 ];
 
+// ===================== THEME TOGGLE =====================
+function toggleTheme() {
+  const body = document.body;
+  const toggleBtn = document.getElementById('theme-toggle');
+  
+  body.classList.toggle('light-mode');
+  
+  if (body.classList.contains('light-mode')) {
+    toggleBtn.textContent = '☀️';
+    localStorage.setItem('iplTheme', 'light');
+  } else {
+    toggleBtn.textContent = '🌙';
+    localStorage.setItem('iplTheme', 'dark');
+  }
+}
+
+// Load saved theme on page load
+function loadTheme() {
+  const savedTheme = localStorage.getItem('iplTheme');
+  const toggleBtn = document.getElementById('theme-toggle');
+  
+  if (savedTheme === 'light') {
+    document.body.classList.add('light-mode');
+    if (toggleBtn) toggleBtn.textContent = '☀️';
+  }
+}
+
+window.toggleTheme = toggleTheme;
+loadTheme();
+
 // ===================== BUILD TEAM GRID =====================

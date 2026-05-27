@@ -2,95 +2,117 @@ let commentaryHistory = [];
 const maxHistoryLength = 10;
 let voiceEnabled = true;
 let voices = [];
+let voicesLoaded = false;
 
 function loadVoices() {
-  voices = speechSynthesis.getVoices();
+  try {
+    voices = speechSynthesis.getVoices();
+    voicesLoaded = true;
+  } catch (e) {
+    console.log('Voice loading error:', e);
+    voicesLoaded = false;
+  }
 }
 
-if ('speechSynthesis' in window) {
-  loadVoices();
-  window.speechSynthesis.onvoiceschanged = loadVoices;
+function initSpeechSynthesis() {
+  if ('speechSynthesis' in window) {
+    try {
+      loadVoices();
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    } catch (e) {
+      console.log('Speech synthesis init error:', e);
+    }
+  }
 }
 
 function speak(text) {
-  if (!voiceEnabled || !('speechSynthesis' in window)) return;
+  if (!voiceEnabled) return;
   
-  speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text.replace(/[^\w\s]/gi, ''));
-  utterance.rate = 1.0;
-  utterance.pitch = 1.0;
-  utterance.volume = 0.8;
-  
-  if (voices.length > 0) {
-    const englishVoices = voices.filter(v => v.lang.toLowerCase().includes('en'));
-    if (englishVoices.length > 0) {
-      utterance.voice = englishVoices[0];
+  try {
+    if (!('speechSynthesis' in window)) {
+      return;
     }
+    
+    speechSynthesis.cancel();
+    const cleanText = text.replace(/[^\w\s]/gi, '');
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    utterance.volume = 0.8;
+    
+    if (voicesLoaded && voices.length > 0) {
+      const englishVoices = voices.filter(v => v.lang.toLowerCase().includes('en'));
+      if (englishVoices.length > 0) {
+        utterance.voice = englishVoices[0];
+      }
+    }
+    
+    speechSynthesis.speak(utterance);
+  } catch (e) {
+    console.log('Speech error:', e);
   }
-  
-  speechSynthesis.speak(utterance);
 }
 
 const commentaryTemplates = {
   four: [
-    "What a shot! 🔥",
-    "Magnificent strokeplay! 🏏",
-    "That's racing away to the boundary! 💨",
-    "Cracking drive! 👏",
-    "Sheer timing! ✨",
-    "Boundary! 🔥"
+    "What a shot!",
+    "Magnificent strokeplay!",
+    "That's racing away to the boundary!",
+    "Cracking drive!",
+    "Sheer timing!",
+    "Boundary!"
   ],
   six: [
-    "IT'S OUT OF THE GROUND! 🚀",
-    "MONSTER HIT! 💥",
-    "What a maximum! 🏏",
-    "That's huge! 🌟",
-    "SIX! SIX! SIX! 🎉",
-    "Over the ropes! 🔥"
+    "IT'S OUT OF THE GROUND!",
+    "MONSTER HIT!",
+    "What a maximum!",
+    "That's huge!",
+    "SIX! SIX! SIX!",
+    "Over the ropes!"
   ],
   wicket: [
-    "WICKET! 🎯",
-    "GONE! That's a big wicket! ⚡",
-    "Bowled him! 🔥",
-    "What a delivery! 🎯",
-    "That's the breakthrough! 💥",
-    "OUT! Big wicket! 👏"
+    "WICKET!",
+    "GONE! That's a big wicket!",
+    "Bowled him!",
+    "What a delivery!",
+    "That's the breakthrough!",
+    "OUT! Big wicket!"
   ],
   single: [
-    "Good running! 🏃",
-    "Smart single! 🧠",
-    "Quick single! 💨"
+    "Good running!",
+    "Smart single!",
+    "Quick single!"
   ],
   double: [
-    "Well run! 🏃",
-    "Two good runs! 👏"
+    "Well run!",
+    "Two good runs!"
   ],
   triple: [
-    "Excellent running! 🏃",
-    "Three runs! Great effort! 💨"
+    "Excellent running!",
+    "Three runs! Great effort!"
   ],
   dot: [
-    "Good ball! 🎯",
-    "Dot ball! Tight stuff! 🔒",
-    "Defended well! 🛡️"
+    "Good ball!",
+    "Dot ball! Tight stuff!",
+    "Defended well!"
   ],
   nb: [
-    "No Ball! Free hit! 🔥",
-    "Oh, that's a no ball! 🚫",
-    "Free hit coming up! ⚡"
+    "No Ball! Free hit!",
+    "Oh, that's a no ball!",
+    "Free hit coming up!"
   ],
   wd: [
-    "Wide! Extra run! 🏃",
-    "That's a wide! 🎯",
-    "Wide ball! Extra run! 🔥"
+    "Wide! Extra run!",
+    "That's a wide!",
+    "Wide ball! Extra run!"
   ],
   bye: [
-    "Byes! Good running! 🏃",
-    "Byes taken! 👏"
+    "Byes! Good running!",
+    "Byes taken!"
   ],
   legbye: [
-    "Leg byes! 🏃",
-    "Leg byes taken! 👏"
+    "Leg byes!",
+    "Leg byes taken!"
   ]
 };
 
@@ -188,14 +210,18 @@ function processExtra(type, runs = 0) {
 }
 
 function renderCommentary() {
-  const container = document.getElementById('commentary-container');
-  if (!container) return;
-  
-  container.innerHTML = commentaryHistory.map(text => `
-    <div class="commentary-item">
-      <div class="commentary-text">${text}</div>
-    </div>
-  `).join('');
+  try {
+    const container = document.getElementById('commentary-container');
+    if (!container) return;
+    
+    container.innerHTML = commentaryHistory.map(text => `
+      <div class="commentary-item">
+        <div class="commentary-text">${text}</div>
+      </div>
+    `).join('');
+  } catch (e) {
+    console.log('Render commentary error:', e);
+  }
 }
 
 function initCommentary() {
@@ -206,9 +232,13 @@ function initCommentary() {
 
 function toggleVoice() {
   voiceEnabled = !voiceEnabled;
-  const btn = document.getElementById('voice-toggle-btn');
-  if (btn) {
-    btn.textContent = voiceEnabled ? '🔊 VOICE ON' : '🔇 VOICE OFF';
+  try {
+    const btn = document.getElementById('voice-toggle-btn');
+    if (btn) {
+      btn.textContent = voiceEnabled ? '🔊 VOICE ON' : '🔇 VOICE OFF';
+    }
+  } catch (e) {
+    console.log('Toggle voice error:', e);
   }
 }
 
@@ -221,6 +251,8 @@ window.aiCommentary = {
   toggleVoice,
   getVoiceEnabled: () => voiceEnabled
 };
+
+initSpeechSynthesis();
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initCommentary);

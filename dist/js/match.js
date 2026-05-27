@@ -130,6 +130,24 @@ function startMatch(){
   innings=1; viewInnings=1; matchOver=false;
   $cl('tab-inn1',['add','on']); $cl('tab-inn2',['remove','on']);
   document.getElementById('header-badge').textContent='LIVE';
+  
+  // ADD TO LIVE SCORES!
+  if (window.addActiveMatchToLiveScores) {
+    window.addActiveMatchToLiveScores(
+      inn[1].batTeamKey, 
+      inn[2].batTeamKey, 
+      `${selStadium.name}, ${selStadium.city}`,
+      inn[1].striker,
+      inn[1].nonStriker,
+      inn[1].bowler
+    );
+  }
+  
+  // INITIALIZE AI COMMENTARY!
+  if (window.aiCommentary && window.aiCommentary.initCommentary) {
+    window.aiCommentary.initCommentary();
+  }
+  
   showPage('page-match');
   updateNav('score');
   renderAll();

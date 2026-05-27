@@ -253,6 +253,7 @@ function checkPlayersNext(){
 
 function navClick(id){
   if(id==='home'){ showPage('page-teams'); updateNav('home'); }
+  else if(id==='live'){ showPage('page-live'); updateNav('live'); }
   else if(id==='score'){ showPage('page-match'); updateNav('score'); renderAll(); }
   else if(id==='squad'){ showPage('page-players'); updateNav('squad'); }
   else if(id==='points'){ 

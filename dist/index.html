@@ -16,12 +16,15 @@
 <div class="header">
   <div class="header-inner">
     <div class="logo">IPL <span>PRO</span></div>
-    <div class="live-badge" id="header-badge">SELECT</div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <div class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">🌙</div>
+      <div class="live-badge" id="header-badge">SELECT</div>
+    </div>
   </div>
 </div>
 
 <!-- PAGE 0: AUTHENTICATION -->
-<div class="page" id="page-auth">
+<div class="page active" id="page-auth">
   <div class="body-wrap" style="display:flex; flex-direction:column; justify-content:center; min-height:80vh;">
     <div class="auth-card">
       <div class="auth-logo">IPL <span>PRO</span></div>
@@ -46,7 +49,7 @@
 </div>
 
 <!-- PAGE 1: TEAM SELECT -->
-<div class="page active" id="page-teams">
+<div class="page" id="page-teams">
 <div class="body-wrap">
   <div class="page-title">SETUP MATCH</div>
 
@@ -379,6 +382,31 @@
 </div>
 </div>
 
+<!-- PAGE 12: PLAYER STATS -->
+<div class="page" id="page-player-stats">
+<div class="body-wrap">
+  <div class="page-title">📊 PLAYER STATS</div>
+  <div id="player-stats-container">Loading player stats...</div>
+</div>
+</div>
+
+<!-- PAGE 13: LIVE SCORES (CRICBUZZ STYLE) -->
+<div class="page" id="page-live">
+<div class="body-wrap">
+  <div class="page-title">🔥 LIVE SCORES</div>
+  
+  <!-- Live Tabs -->
+  <div class="live-tabs">
+    <button class="live-tab active" data-tab="live" onclick="switchLiveTab('live')">🔴 LIVE</button>
+    <button class="live-tab" data-tab="upcoming" onclick="switchLiveTab('upcoming')">📅 UPCOMING</button>
+    <button class="live-tab" data-tab="finished" onclick="switchLiveTab('finished')">✅ FINISHED</button>
+  </div>
+  
+  <!-- Live Matches Container -->
+  <div id="live-matches-container"></div>
+</div>
+</div>
+
 <!-- TEAM EDIT MODAL -->
 <div class="modal-overlay hidden" id="team-logo-modal">
 <div class="modal-box" style="max-width:440px;">
@@ -575,17 +603,17 @@
   <div class="nav-item active" id="nav-home" onclick="navClick('home')">
     <span style="font-size:20px;">🏠</span><span>Home</span><div class="nav-dot"></div>
   </div>
-  <div class="nav-item" id="nav-score" onclick="navClick('score')">
-    <span style="font-size:20px;">📊</span><span>Score</span><div class="nav-dot"></div>
+  <div class="nav-item" id="nav-live" onclick="navClick('live')">
+    <span style="font-size:20px;">�</span><span>Live</span><div class="nav-dot"></div>
   </div>
-  <div class="nav-item" id="nav-squad" onclick="navClick('squad')">
-    <span style="font-size:20px;">👥</span><span>Squad</span><div class="nav-dot"></div>
+  <div class="nav-item" id="nav-score" onclick="navClick('score')">
+    <span style="font-size:20px;">�</span><span>Score</span><div class="nav-dot"></div>
+  </div>
+  <div class="nav-item" id="nav-stats" onclick="navClick('stats')">
+    <span style="font-size:20px;">📈</span><span>Stats</span><div class="nav-dot"></div>
   </div>
   <div class="nav-item" id="nav-points" onclick="navClick('points')">
     <span style="font-size:20px;">📋</span><span>Points</span><div class="nav-dot"></div>
-  </div>
-  <div class="nav-item" id="nav-chat" onclick="navClick('chat')">
-    <span style="font-size:20px;">💬</span><span>Chat</span><div class="nav-dot"></div>
   </div>
   <div class="nav-item" id="nav-leaderboard" onclick="navClick('leaderboard')">
     <span style="font-size:20px;">🏆</span><span>Top</span><div class="nav-dot"></div>
@@ -600,12 +628,13 @@
   <script src="js/app.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/match.js"></script>
-  <script src="js/scoring.js"></script>
   <script src="js/stats.js"></script>
   <script src="js/aiCommentary.js"></script>
+  <script src="js/scoring.js"></script>
   <script src="js/runRate.js"></script>
   <script src="js/pointsTable.js"></script>
   <script src="js/liveScore.js"></script>
+  <script src="js/playerStats.js"></script>
 
 </body>
 </html>

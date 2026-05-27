@@ -26,17 +26,20 @@ function addBall(val){
   }
 
   let legalBall=true;
+  let commentary = '';
 
   if(val==='NB'){
     s.runs+=1; s.bowlStats[bowlName].r+=1;
     s.partnership.runs +=1;
     s.allBalls.push({v:'NB',over:Math.floor(s.balls/6)});
     legalBall=false;
+    commentary = 'No ball! Free hit!';
   } else if(val==='WD'){
     s.runs+=1; s.bowlStats[bowlName].r+=1;
     s.partnership.runs +=1;
     s.allBalls.push({v:'WD',over:Math.floor(s.balls/6)});
     legalBall=false;
+    commentary = 'Wide! Extra run!';
   } else if(val==='W'){
     s.batStats[batName].b+=1; s.batStats[batName].out=true;
     s.bowlStats[bowlName].w+=1; s.bowlStats[bowlName].balls+=1;
@@ -46,6 +49,7 @@ function addBall(val){
     const remaining=s.batting.filter(n=>!s.batStats[n].out&&n!==s.striker&&n!==s.nonStriker);
     s.striker=remaining.length>0?remaining[0]:null;
     s.partnership={runs:0, balls:0};
+    commentary = 'Wicket! Big breakthrough! 🎯';
   } else {
     s.runs+=val; s.batStats[batName].r+=val; s.batStats[batName].b+=1;
     if(val===4) s.batStats[batName].fours+=1;
@@ -56,6 +60,13 @@ function addBall(val){
     s.partnership.balls += 1;
     s.allBalls.push({v:val,over:Math.floor((s.balls-1)/6)});
     if(val===1||val===3){const tmp=s.striker;s.striker=s.nonStriker;s.nonStriker=tmp;}
+    
+    if(val===0) commentary = 'Dot ball! Good line and length! 🔒';
+    else if(val===1) commentary = 'Single taken! 🏃';
+    else if(val===2) commentary = 'Two runs! Well run! 👏';
+    else if(val===3) commentary = 'Three! Excellent running! 💨';
+    else if(val===4) commentary = 'FOUR! Beautiful shot! 🔥';
+    else if(val===6) commentary = 'SIX! Out of the ground! 🚀';
   }
 
   if(legalBall && s.balls%6===0 && s.balls>0){
@@ -65,6 +76,12 @@ function addBall(val){
 
   if (window.aiCommentary && window.aiCommentary.processBallEvent) {
     window.aiCommentary.processBallEvent(val, batName, bowlName, innings);
+  }
+  
+  // UPDATE LIVE SCORES!
+  if (window.updateActiveMatchScore) {
+    const inningsData = { runs: s.runs, wickets: s.wickets, balls: s.balls };
+    window.updateActiveMatchScore(inningsData, innings, commentary, s.striker, s.nonStriker, s.bowler);
   }
   
   checkInningsEnd();
@@ -157,8 +174,8 @@ function endMatch(){
   const i1=inn[1],i2=inn[2];
   const target=i1.runs+1;
   const t1=TEAMS[i1.batTeamKey],t2=TEAMS[i2.batTeamKey];
-  const k1 = i1.batTeamKey;
-  const k2 = i2.batTeamKey;
+  const kt1 = i1.batTeamKey;
+  const kt2 = i2.batTeamKey;
   
   let winner='',sub='';
   let winTeam=null, loseTeam=null;
@@ -175,32 +192,45 @@ function endMatch(){
     isTie = true;
   }
   
+  if (window.playerStats && window.playerStats.updatePlayerStatsAfterMatch) {
+    window.playerStats.updatePlayerStatsAfterMatch(i1, i2);
+  }
+  
   if (window.pointsTable) {
-    const wk1 = k1;
-    const wk2 = k2;
+    const wk1 = kt1;
+    const wk2 = kt2;
     
     if (window.pointsTable.updateTeamStats) {
-      window.pointsTable.updateTeamStats(k1, i1.runs, i1.balls);
-      window.pointsTable.updateTeamStats(k2, i2.runs, i2.balls);
+      window.pointsTable.updateTeamStats(kt1, i1.runs, i1.balls);
+      window.pointsTable.updateTeamStats(kt2, i2.runs, i2.balls);
     }
     
     if (window.pointsTable.updateOpponentStats) {
-      window.pointsTable.updateOpponentStats(k1, i2.runs, i2.balls);
-      window.pointsTable.updateOpponentStats(k2, i1.runs, i1.balls);
+      window.pointsTable.updateOpponentStats(kt1, i2.runs, i2.balls);
+      window.pointsTable.updateOpponentStats(kt2, i1.runs, i1.balls);
     }
     
     if (window.pointsTable.updatePointsTable) {
       if (isTie) {
         window.pointsTable.updatePointsTable(wk1, wk2, true, false);
       } else if (winTeam) {
-        const winKey = winTeam === t1 ? k1 : k2;
-        const loseKey = winTeam === t1 ? k2 : k1;
+        const winKey = winTeam === t1 ? kt1 : kt2;
+        const loseKey = winTeam === t1 ? kt2 : kt1;
         window.pointsTable.updatePointsTable(winKey, loseKey, false, false);
       }
     }
   }
   
   saveMatchToHistory(winTeam, t1, t2, i1, i2);
+  
+  // FINISH ACTIVE MATCH IN LIVE SCORES!
+  if (window.finishActiveMatch) {
+    const winKey = winTeam ? (winTeam === t1 ? kt1 : kt2) : null;
+    if (winKey) {
+      window.finishActiveMatch(winKey);
+    }
+  }
+  
   // Winner display — just team short name, no logo tag
   document.getElementById('end-winner').textContent = winTeam ? winTeam.short : 'TIED!';
   document.getElementById('end-sub').textContent=sub;
@@ -215,10 +245,10 @@ function endMatch(){
   document.getElementById('winner-logo').innerHTML = wLogoImg;
 
   // Score boxes
-  const kt1 = Object.keys(TEAMS).find(k=>TEAMS[k]===t1);
-  const kt2 = Object.keys(TEAMS).find(k=>TEAMS[k]===t2);
-  const logo1 = kt1&&TEAM_LOGOS[kt1]?`<img src="${TEAM_LOGOS[kt1]}" style="width:36px;height:36px;object-fit:contain;border-radius:6px;">`:t1.logo;
-  const logo2 = kt2&&TEAM_LOGOS[kt2]?`<img src="${TEAM_LOGOS[kt2]}" style="width:36px;height:36px;object-fit:contain;border-radius:6px;">`:t2.logo;
+  const k1 = Object.keys(TEAMS).find(k=>TEAMS[k]===t1);
+  const k2 = Object.keys(TEAMS).find(k=>TEAMS[k]===t2);
+  const logo1 = k1&&TEAM_LOGOS[k1]?`<img src="${TEAM_LOGOS[k1]}" style="width:36px;height:36px;object-fit:contain;border-radius:6px;">`:t1.logo;
+  const logo2 = k2&&TEAM_LOGOS[k2]?`<img src="${TEAM_LOGOS[k2]}" style="width:36px;height:36px;object-fit:contain;border-radius:6px;">`:t2.logo;
   document.getElementById('final-scores').innerHTML=`
     <div class="final-box" style="border:2px solid ${winTeam===t1?'var(--gold)':'var(--border)'}">
       <div class="fb-team">${logo1} ${t1.short}</div>
